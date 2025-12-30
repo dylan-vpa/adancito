@@ -47,7 +47,20 @@ fi
 echo -e "${GREEN}✓ PM2 version: $(pm2 -v)${NC}"
 
 # ============================================
-# 3. Install all dependencies (root, server, client)
+# 3. Create/Update .env file
+# ============================================
+echo -e "\n${YELLOW}📝 Creating .env file...${NC}"
+cat > .env << 'EOF'
+PORT=8001
+HOST=0.0.0.0
+JWT_SECRET=adan_super_secret_jwt_key_2024
+OLLAMA_BASE_URL=https://x1rspglhz3krhh-11434.proxy.runpod.net
+OLLAMA_MODEL=qwen3:1.7b
+EOF
+echo -e "${GREEN}✓ .env file created${NC}"
+
+# ============================================
+# 4. Install all dependencies (root, server, client)
 # ============================================
 echo -e "\n${YELLOW}📦 Installing all dependencies...${NC}"
 npm install
