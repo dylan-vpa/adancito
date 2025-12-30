@@ -1,0 +1,62 @@
+/* Additional styles for improved layout */
+
+/* Flex utilities */
+.flex-1 {
+    flex: 1;
+}
+
+/* Improve chat message container */
+.chat-message-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Sidebar styles */
+.sidebar {
+    width: 280px;
+    height: 100vh;
+    background-color: var(--color-primary-surface);
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Smooth transitions for layout changes */
+.layout-transition {
+    transition: all var(--duration-normal) var(--easing);
+}
+
+/* Better hover for chat cards */
+.chat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* Icon wrapper */
+.icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Improve gap utilities */
+.gap-xs {
+    gap: var(--spacing-xs);
+}
+
+.gap-sm {
+    gap: var(--spacing-sm);
+}
+
+.gap-md {
+    gap: var(--spacing-md);
+}
+
+.gap-lg {
+    gap: var(--spacing-lg);
+}
+
+/* Text overflow */
+.text-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
