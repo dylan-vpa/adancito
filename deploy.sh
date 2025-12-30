@@ -52,6 +52,9 @@ echo -e "\n${YELLOW}📦 Installing server dependencies...${NC}"
 cd "$SCRIPT_DIR/server"
 npm install
 
+echo -e "\n${YELLOW}🔨 Building server (TypeScript)...${NC}"
+npm run build
+
 echo -e "\n${YELLOW}📦 Installing client dependencies...${NC}"
 cd "$SCRIPT_DIR/client"
 npm install
