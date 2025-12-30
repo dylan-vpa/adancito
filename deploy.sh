@@ -47,17 +47,23 @@ fi
 echo -e "${GREEN}✓ PM2 version: $(pm2 -v)${NC}"
 
 # ============================================
-# 3. Create/Update .env file
+# 3. Create/Update .env file (in root AND server directory)
 # ============================================
-echo -e "\n${YELLOW}📝 Creating .env file...${NC}"
-cat > .env << 'EOF'
-PORT=8001
+echo -e "\n${YELLOW}📝 Creating .env files...${NC}"
+
+ENV_CONTENT="PORT=8001
 HOST=0.0.0.0
 JWT_SECRET=adan_super_secret_jwt_key_2024
 OLLAMA_BASE_URL=https://x1rspglhz3krhh-11434.proxy.runpod.net
-OLLAMA_MODEL=qwen3:1.7b
-EOF
-echo -e "${GREEN}✓ .env file created${NC}"
+OLLAMA_MODEL=gpt-oss"
+
+# Create in root
+echo "$ENV_CONTENT" > .env
+echo -e "${GREEN}✓ .env created in root${NC}"
+
+# Create in server directory (for dotenv to find it)
+echo "$ENV_CONTENT" > server/.env
+echo -e "${GREEN}✓ .env created in server/${NC}"
 
 # ============================================
 # 4. Install all dependencies (root, server, client)
