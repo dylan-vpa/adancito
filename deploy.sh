@@ -2,6 +2,7 @@
 
 # ============================================
 # ADAN APP - Deployment Script for Linux/RunPod
+# Runs both frontend and backend via npm run dev
 # Frontend: 0.0.0.0:8000
 # Backend:  0.0.0.0:8001
 # ============================================
@@ -46,72 +47,15 @@ fi
 echo -e "${GREEN}✓ PM2 version: $(pm2 -v)${NC}"
 
 # ============================================
-# 3. Install dependencies
+# 3. Install all dependencies (root, server, client)
 # ============================================
-echo -e "\n${YELLOW}📦 Installing server dependencies...${NC}"
-cd "$SCRIPT_DIR/server"
-npm install
-
-echo -e "\n${YELLOW}🔨 Building server (TypeScript)...${NC}"
-npm run build
-
-echo -e "\n${YELLOW}📦 Installing client dependencies...${NC}"
-cd "$SCRIPT_DIR/client"
+echo -e "\n${YELLOW}📦 Installing all dependencies...${NC}"
 npm install
 
 # ============================================
-# 4. Build the client
+# 4. Update vite config to use 0.0.0.0
 # ============================================
-echo -e "\n${YELLOW}🔨 Building client...${NC}"
-npm run build
-
-# ============================================
-# 5. Create PM2 ecosystem config
-# ============================================
-echo -e "\n${YELLOW}📝 Creating PM2 ecosystem config...${NC}"
-cd "$SCRIPT_DIR"
-
-cat > ecosystem.config.js << 'EOF'
-module.exports = {
-  apps: [
-    {
-      name: 'adan-backend',
-      cwd: './server',
-      script: 'npm',
-      args: 'start',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 8001,
-        HOST: '0.0.0.0'
-      },
-      watch: false,
-      instances: 1,
-      autorestart: true,
-      max_restarts: 10
-    },
-    {
-      name: 'adan-frontend',
-      cwd: './client',
-      script: 'npx',
-      args: 'vite preview --host 0.0.0.0 --port 8000',
-      env: {
-        NODE_ENV: 'production'
-      },
-      watch: false,
-      instances: 1,
-      autorestart: true,
-      max_restarts: 10
-    }
-  ]
-};
-EOF
-
-echo -e "${GREEN}✓ PM2 ecosystem.config.js created${NC}"
-
-# ============================================
-# 6. Update vite config for production preview
-# ============================================
-echo -e "\n${YELLOW}📝 Updating Vite config...${NC}"
+echo -e "\n${YELLOW}📝 Updating Vite config for 0.0.0.0...${NC}"
 cat > client/vite.config.ts << 'EOF'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -151,19 +95,19 @@ EOF
 echo -e "${GREEN}✓ Vite config updated${NC}"
 
 # ============================================
-# 7. Stop existing PM2 processes
+# 5. Stop existing PM2 processes
 # ============================================
 echo -e "\n${YELLOW}🛑 Stopping existing PM2 processes...${NC}"
 pm2 delete all 2>/dev/null || true
 
 # ============================================
-# 8. Start with PM2
+# 6. Start with PM2 using npm run dev
 # ============================================
-echo -e "\n${YELLOW}🚀 Starting services with PM2...${NC}"
-pm2 start ecosystem.config.js
+echo -e "\n${YELLOW}🚀 Starting ADAN with PM2 (npm run dev)...${NC}"
+pm2 start npm --name "adan-app" -- run dev
 
 # ============================================
-# 9. Save PM2 config and setup startup
+# 7. Save PM2 config and setup startup
 # ============================================
 echo -e "\n${YELLOW}💾 Saving PM2 process list...${NC}"
 pm2 save
@@ -172,7 +116,7 @@ echo -e "\n${YELLOW}🔧 Setting up PM2 startup script...${NC}"
 pm2 startup 2>/dev/null || echo "Run 'pm2 startup' manually if needed"
 
 # ============================================
-# 10. Show status
+# 8. Show status
 # ============================================
 echo -e "\n${GREEN}============================================${NC}"
 echo -e "${GREEN}✅ ADAN App Deployed Successfully!${NC}"
@@ -185,11 +129,9 @@ echo -e "${GREEN}📱 Frontend: http://0.0.0.0:8000${NC}"
 echo -e "${GREEN}🔧 Backend:  http://0.0.0.0:8001${NC}"
 echo ""
 echo -e "${YELLOW}PM2 Commands:${NC}"
-echo "  pm2 status     - Check status"
-echo "  pm2 logs       - View all logs"
-echo "  pm2 logs adan-backend  - Backend logs"
-echo "  pm2 logs adan-frontend - Frontend logs"
-echo "  pm2 restart all - Restart all services"
-echo "  pm2 stop all    - Stop all services"
+echo "  pm2 status         - Check status"
+echo "  pm2 logs adan-app  - View logs"
+echo "  pm2 restart adan-app - Restart"
+echo "  pm2 stop adan-app    - Stop"
 echo ""
 echo -e "${GREEN}🎉 Done!${NC}"
