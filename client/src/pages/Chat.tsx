@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Compass, Target, Building2, Rocket, TrendingUp, RefreshCw, Crown, Sparkles } from 'lucide-react';
+import { ChevronLeft, Compass, Target, Rocket, Sparkles } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../services/api';
 import { MessageBubble } from '../components/chat/MessageBubble';

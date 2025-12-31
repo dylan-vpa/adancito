@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit2, Archive, Trash2, Plus, MessageSquare, Check, X, Lock, FileText, Download } from 'lucide-react';
+import { Edit2, Archive, Trash2, Plus, MessageSquare, Lock, FileText, Download } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { StepsTimeline } from '../components/projects/StepsTimeline';
 import { apiClient } from '../services/api';

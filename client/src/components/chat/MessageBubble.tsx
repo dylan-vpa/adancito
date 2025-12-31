@@ -248,18 +248,6 @@ export function MessageBubble({ message, onPreview, chatId }: MessageBubbleProps
                                         const isHtml = match && match[1] === 'html';
                                         const codeContent = String(children).replace(/\n$/, '');
 
-                                        const handleCodeDownload = () => {
-                                            const blob = new Blob([codeContent], { type: 'text/html' });
-                                            const url = URL.createObjectURL(blob);
-                                            const a = document.createElement('a');
-                                            a.href = url;
-                                            a.download = `mvp-${Date.now()}.html`;
-                                            document.body.appendChild(a);
-                                            a.click();
-                                            document.body.removeChild(a);
-                                            URL.revokeObjectURL(url);
-                                        };
-
                                         // Handle custom 'context-card' for previous deliverables
                                         if (match && match[1] === 'context-card' && !inline) {
                                             try {
