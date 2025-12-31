@@ -11,13 +11,14 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
     port: 8000,
+    hmr: false, // Disable HMR WebSocket for RunPod proxy compatibility
     proxy: {
       '/api': {
         target: 'http://localhost:8001',
         changeOrigin: true,
       },
-
     },
   },
 })
