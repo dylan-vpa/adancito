@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { getOne, runQuery, generateId } from '../models/db';
+import { getOne, getAll, runQuery, generateId } from '../models/db';
 
 /**
  * Generate referral code for user
@@ -114,5 +114,30 @@ export function submitFeedback(req: AuthRequest, res: Response) {
     } catch (error) {
         console.error('Submit feedback error:', error);
         res.status(500).json({ success: false, error: 'Failed to submit feedback' });
+    }
+}
+
+/**
+ * Get list of users referred by current user
+ */
+export function getReferrals(req: AuthRequest, res: Response) {
+    try {
+        const referrals = getAll<{
+            id: string;
+            email: string;
+            full_name: string | null;
+            created_at: string;
+        }>(
+            'SELECT id, email, full_name, created_at FROM users WHERE referred_by = ? ORDER BY created_at DESC',
+            [req.userId!]
+        );
+
+        res.json({
+            success: true,
+            data: { referrals }
+        });
+    } catch (error) {
+        console.error('Get referrals error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get referrals' });
     }
 }

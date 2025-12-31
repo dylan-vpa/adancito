@@ -33,9 +33,11 @@ export function initializeDatabase() {
       full_name TEXT,
       avatar_url TEXT,
       referral_code TEXT UNIQUE,
+      referred_by TEXT,
       total_referrals INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (referred_by) REFERENCES users(id)
     )
   `);
 

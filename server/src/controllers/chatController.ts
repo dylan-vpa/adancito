@@ -470,3 +470,129 @@ export async function sendMessage(req: AuthRequest, res: Response) {
         }
     }
 }
+
+/**
+ * Generate welcome message for a new chat with project context
+ */
+export function generateWelcomeMessage(req: AuthRequest, res: Response) {
+    try {
+        const { id } = req.params;
+
+        // Get the deliverable associated with this chat
+        const deliverable = getOne<{
+            id: string;
+            project_id: string;
+            eden_level: string;
+            title: string;
+            description: string;
+            step_number: number;
+        }>(
+            'SELECT id, project_id, eden_level, title, description, step_number FROM project_deliverables WHERE chat_id = ?',
+            [id]
+        );
+
+        if (!deliverable) {
+            return res.json({
+                success: true,
+                data: {
+                    message: '¡Hola! 👋 Soy Adán, tu asistente de negocios. ¿En qué puedo ayudarte hoy?'
+                }
+            });
+        }
+
+        // Get project info
+        const project = getOne<{ name: string; description: string }>(
+            'SELECT name, description FROM projects WHERE id = ?',
+            [deliverable.project_id]
+        );
+
+        // Get context from previous completed levels
+        const previousDeliverables = getAll<{ chat_id: string; eden_level: string; title: string }>(
+            `SELECT chat_id, eden_level, title FROM project_deliverables 
+             WHERE project_id = ? AND step_number < ? AND chat_id IS NOT NULL AND status = 'completed'
+             ORDER BY step_number ASC`,
+            [deliverable.project_id, deliverable.step_number]
+        );
+
+        const previousContext: string[] = [];
+        for (const prev of previousDeliverables) {
+            const lastMsg = getOne<{ content: string }>(
+                `SELECT content FROM chat_messages 
+                 WHERE session_id = ? AND role = 'assistant' 
+                 ORDER BY created_at DESC LIMIT 1`,
+                [prev.chat_id]
+            );
+            if (lastMsg?.content) {
+                // Extract first meaningful paragraph (skip very short or code blocks)
+                let summary = lastMsg.content
+                    .split('\n')
+                    .filter(line => line.length > 50 && !line.startsWith('```'))
+                    .slice(0, 2)
+                    .join(' ')
+                    .substring(0, 200);
+                if (summary) {
+                    previousContext.push(`✅ **${prev.eden_level}**: ${summary}...`);
+                }
+            }
+        }
+
+        // Level descriptions
+        const levelDescriptions: Record<string, string> = {
+            'E - Exploración': 'explorar y entender profundamente tu idea de negocio, identificando oportunidades y definiendo el problema que resuelves',
+            'D - Diseño': 'diseñar la estrategia y modelo de negocio, definiendo tu propuesta de valor y cómo llegarás a tus clientes',
+            'E - Estructuración': 'estructurar los procesos y operaciones necesarias para hacer realidad tu negocio',
+            'N - Navegación': 'crear un MVP (Producto Mínimo Viable) que puedas mostrar y validar con usuarios reales',
+        };
+
+        const levelEmojis: Record<string, string> = {
+            'E - Exploración': '🧭',
+            'D - Diseño': '📐',
+            'E - Estructuración': '🏗️',
+            'N - Navegación': '🚀',
+        };
+
+        const levelDesc = levelDescriptions[deliverable.eden_level] || 'trabajar en esta fase de tu proyecto';
+        const levelEmoji = levelEmojis[deliverable.eden_level] || '💼';
+
+        // Build welcome message
+        let welcomeMessage = `¡Hola! 👋 Soy **Adán**, tu asistente para la fase **${deliverable.eden_level}**.\n\n`;
+
+        welcomeMessage += `📌 **Proyecto:** ${project?.name || 'Tu proyecto'}\n`;
+        if (project?.description) {
+            welcomeMessage += `📝 **Descripción:** ${project.description}\n`;
+        }
+        welcomeMessage += `\n${levelEmoji} En esta fase vamos a **${levelDesc}**.\n`;
+
+        if (previousContext.length > 0) {
+            welcomeMessage += `\n### Lo que hemos logrado:\n`;
+            welcomeMessage += previousContext.join('\n') + '\n';
+        }
+
+        welcomeMessage += `\n¿Listo para comenzar? 🎯 Cuéntame más sobre lo que tienes en mente o pregúntame cualquier cosa.`;
+
+        // Save the welcome message to the database
+        const messageId = generateId();
+        const now = getCurrentTimestamp();
+
+        runQuery(
+            `INSERT INTO chat_messages (id, session_id, user_id, role, content, code_language, created_at)
+             VALUES (?, ?, ?, 'assistant', ?, ?, ?)`,
+            [messageId, id, req.userId!, welcomeMessage, `AGENT:Adán`, now]
+        );
+
+        res.json({
+            success: true,
+            data: {
+                message: welcomeMessage,
+                messageId
+            }
+        });
+
+    } catch (error) {
+        console.error('Generate welcome message error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate welcome message'
+        });
+    }
+}

@@ -6,7 +6,8 @@ import {
     updateChatSession,
     deleteChatSession,
     getChatMessages,
-    sendMessage
+    sendMessage,
+    generateWelcomeMessage
 } from '../controllers/chatController';
 import { authMiddleware } from '../middleware/auth';
 
@@ -24,6 +25,7 @@ router.delete('/chats/:id', deleteChatSession);
 
 // Messages
 router.get('/chats/:id/messages', getChatMessages);
+router.post('/chats/:id/welcome', generateWelcomeMessage);
 router.post('/chat', sendMessage); // SSE endpoint
 
 export default router;

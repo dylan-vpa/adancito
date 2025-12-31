@@ -100,6 +100,14 @@ class ApiClient {
         return response.data.data || [];
     }
 
+    async generateWelcomeMessage(sessionId: string): Promise<{ message: string; messageId: string }> {
+        const response = await this.client.post<ApiResponse<{ message: string; messageId: string }>>(`/chats/${sessionId}/welcome`);
+        if (response.data.success && response.data.data) {
+            return response.data.data;
+        }
+        throw new Error('Failed to generate welcome message');
+    }
+
     // ========== USER ==========
     async getReferralCode(): Promise<string> {
         const response = await this.client.get<ApiResponse<{ referral_code: string }>>('/user/referral-code');
@@ -113,6 +121,11 @@ class ApiClient {
 
     async submitFeedback(feedback: Omit<UserFeedback, 'id' | 'user_id' | 'created_at'>): Promise<void> {
         await this.client.post('/user/feedback', feedback);
+    }
+
+    async getReferrals(): Promise<{ id: string; email: string; full_name: string | null; created_at: string }[]> {
+        const response = await this.client.get<ApiResponse<{ referrals: { id: string; email: string; full_name: string | null; created_at: string }[] }>>('/user/referrals');
+        return response.data.data?.referrals || [];
     }
 
     // ========== PAYMENTS ==========

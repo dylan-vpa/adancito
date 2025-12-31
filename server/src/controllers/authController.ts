@@ -52,11 +52,34 @@ export async function register(req: AuthRequest, res: Response) {
         const userId = generateId();
         const now = getCurrentTimestamp();
 
+        // Handle referral code if provided
+        let referrerId: string | null = null;
+        const { referral_code } = req.body;
+
+        if (referral_code) {
+            const referrer = getOne<{ id: string }>('SELECT id FROM users WHERE referral_code = ?', [referral_code]);
+            if (referrer) {
+                referrerId = referrer.id;
+                console.log(`[Register] User referred by: ${referrerId}`);
+            } else {
+                console.log(`[Register] Invalid referral code: ${referral_code}`);
+            }
+        }
+
         runQuery(
-            `INSERT INTO users (id, email, password_hash, full_name, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-            [userId, email, password_hash, full_name || null, now, now]
+            `INSERT INTO users (id, email, password_hash, full_name, referred_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [userId, email, password_hash, full_name || null, referrerId, now, now]
         );
+
+        // If referred, increment referrer's total_referrals
+        if (referrerId) {
+            runQuery(
+                'UPDATE users SET total_referrals = total_referrals + 1 WHERE id = ?',
+                [referrerId]
+            );
+            console.log(`[Register] ✅ Incremented referral count for ${referrerId}`);
+        }
 
         // Initialize user coins
         runQuery(

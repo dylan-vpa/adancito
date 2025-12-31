@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
@@ -10,8 +10,19 @@ export function Register() {
     const [fullName, setFullName] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [referralCode, setReferralCode] = useState<string | null>(null);
     const { register } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    // Read referral code from URL on mount
+    useEffect(() => {
+        const ref = searchParams.get('ref');
+        if (ref) {
+            setReferralCode(ref);
+            console.log('[Register] Referral code from URL:', ref);
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,7 +30,12 @@ export function Register() {
         setIsLoading(true);
 
         try {
-            await register({ email, password, full_name: fullName });
+            await register({
+                email,
+                password,
+                full_name: fullName,
+                referral_code: referralCode || undefined
+            });
             navigate('/dashboard');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al registrarse');

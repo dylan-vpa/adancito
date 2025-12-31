@@ -34,12 +34,6 @@ export function Profile() {
         }
     };
 
-    const handleCopyReferral = () => {
-        navigator.clipboard.writeText(referralCode);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
     const handleSubmitFeedback = async () => {
         try {
             await apiClient.submitFeedback({
@@ -103,26 +97,44 @@ export function Profile() {
                         </div>
                     </div>
 
-                    {/* Referral Code */}
+                    {/* Referral Section */}
                     {referralCode && (
                         <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-                            <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Código de Referido</h3>
+                            <h3 style={{ marginBottom: 'var(--spacing-md)' }}>🔗 Tu Link de Referido</h3>
                             <p className="text-secondary caption" style={{ marginBottom: 'var(--spacing-md)' }}>
-                                Comparte tu código y gana recompensas cuando tus amigos se unan
+                                Comparte este link y gana recompensas cuando tus amigos se unan
                             </p>
-                            <div className="flex gap-sm">
-                                <Input
-                                    value={referralCode}
-                                    readOnly
-                                    style={{ flex: 1, fontFamily: 'monospace' }}
-                                />
-                                <Button onClick={handleCopyReferral}>
-                                    {copied ? <Check size={18} /> : <Copy size={18} />}
-                                    <span style={{ marginLeft: 'var(--spacing-xs)' }}>
-                                        {copied ? 'Copiado' : 'Copiar'}
-                                    </span>
-                                </Button>
+
+                            {/* Shareable Link */}
+                            <div style={{
+                                padding: 'var(--spacing-md)',
+                                background: 'var(--color-primary-surface)',
+                                borderRadius: 'var(--radius-medium)',
+                                marginBottom: 'var(--spacing-md)'
+                            }}>
+                                <div className="flex gap-sm" style={{ alignItems: 'center' }}>
+                                    <Input
+                                        value={`${window.location.origin}/register?ref=${referralCode}`}
+                                        readOnly
+                                        style={{ flex: 1, fontFamily: 'monospace', fontSize: 'var(--font-size-caption)' }}
+                                    />
+                                    <Button onClick={() => {
+                                        navigator.clipboard.writeText(`${window.location.origin}/register?ref=${referralCode}`);
+                                        setCopied(true);
+                                        setTimeout(() => setCopied(false), 2000);
+                                    }}>
+                                        {copied ? <Check size={18} /> : <Copy size={18} />}
+                                        <span style={{ marginLeft: 'var(--spacing-xs)' }}>
+                                            {copied ? '¡Copiado!' : 'Copiar Link'}
+                                        </span>
+                                    </Button>
+                                </div>
                             </div>
+
+                            {/* Referral Code Display */}
+                            <p className="caption text-secondary" style={{ marginBottom: 'var(--spacing-sm)' }}>
+                                Código: <strong style={{ fontFamily: 'monospace' }}>{referralCode}</strong>
+                            </p>
                         </div>
                     )}
 

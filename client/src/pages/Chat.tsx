@@ -55,10 +55,33 @@ export function Chat() {
                     });
                 }
 
-                if (state?.initialMessage && chatMessages.length === 0) {
-                    setTimeout(() => {
-                        handleSendMessage(state.initialMessage!, state.initialModel);
-                    }, 100);
+                // If chat is empty, generate welcome message
+                if (chatMessages.length === 0) {
+                    // Check if there's an initial user message (manual override)
+                    if (state?.initialMessage) {
+                        setTimeout(() => {
+                            handleSendMessage(state.initialMessage!, state.initialModel);
+                        }, 100);
+                    } else {
+                        // Otherwise, generate AI welcome message
+                        try {
+                            setIsLoading(true); // Keep loading while generating welcome
+                            const welcome = await apiClient.generateWelcomeMessage(id);
+
+                            // Add welcome message to state
+                            const welcomeMsg: Message = {
+                                id: welcome.messageId,
+                                session_id: id,
+                                user_id: 'system', // or assistant user id
+                                role: 'assistant',
+                                content: welcome.message,
+                                created_at: new Date().toISOString()
+                            };
+                            setMessages([welcomeMsg]);
+                        } catch (err) {
+                            console.error('Error generating welcome message:', err);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error loading chat:', error);
