@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { getOne, getAll, runQuery, generateId, getCurrentTimestamp } from '../models/db';
 import { selectAgents, streamOllamaResponse } from '../services/ollamaService';
+import { streamClaudeResponse } from '../services/anthropicService';
 
 interface ChatSession {
     id: string;
@@ -273,7 +274,7 @@ export async function sendMessage(req: AuthRequest, res: Response) {
 
         // Select agents based on content
         const agentSelection = selectAgents(content);
-        const selectedModel = model || agentSelection.primary_agent;
+        let selectedModel = model || agentSelection.primary_agent;
 
         // Setup SSE
         res.setHeader('Content-Type', 'text/event-stream');
@@ -285,12 +286,15 @@ export async function sendMessage(req: AuthRequest, res: Response) {
 
         // Send thinking indicator
         const assistantMessageId = generateId();
+        /*
         res.write(`event: assistant_chunk\ndata: ${JSON.stringify({
             id: assistantMessageId,
             agent: selectedModel,
             content: '',
             isThinking: true
         })}\n\n`);
+        */
+        // MOVED thinking indicator down to send correct model name if changed
 
         // Get chat history for current session
         const previousMessages = getAll<Message>(
@@ -308,9 +312,33 @@ export async function sendMessage(req: AuthRequest, res: Response) {
             'SELECT eden_level, project_id, step_number FROM project_deliverables WHERE chat_id = ?',
             [session_id]
         );
-        const edenLevel = deliverable?.eden_level;
+        // CRITICAL FIX: Use DB level if exists, otherwise fallback to intent-detected level from ollamaService
+        let edenLevel = deliverable?.eden_level || agentSelection.eden_level;
+
+        // OVERRIDE: If the user is explicitly asking for MVP code (detected by agentSelection),
+        // force the MVP level prompt to ensure they get the code, overriding any previous DB state constraint.
+        if (agentSelection.eden_level === 'N - Navegación') {
+            console.log('[Chat] 🚀 Forced MVP Level Override detected!');
+            edenLevel = 'N - Navegación';
+        }
+
+        // FORCE MODEL: If we are in MVP level (either by DB or detection), force Claude 3.5 Sonnet
+        // Note: DB writes 'Nivel 4 - MVP Funcional' vs Service 'N - Navegación', so we use inclusive check
+        if (edenLevel && (edenLevel.includes('Navegación') || edenLevel.includes('MVP'))) {
+            console.log('[Chat] 🚀 MVP Level detected - Forcing Claude 3.5 Sonnet');
+            selectedModel = 'claude-opus-4-5-20251101';
+        }
+
+        // Send thinking indicator NOW with correct model
+        res.write(`event: assistant_chunk\ndata: ${JSON.stringify({
+            id: assistantMessageId,
+            agent: 'Adán',
+            content: '',
+            isThinking: true
+        })}\n\n`);
 
         console.log(`[Chat] Session ${session_id} - Deliverable info:`, deliverable);
+        console.log(`[Chat] Using EDEN Level: ${edenLevel}`);
 
         // CONTEXT CONTINUITY: If this is step 2+, fetch summary from previous levels
         if (deliverable?.project_id && deliverable?.step_number && deliverable.step_number > 1) {
@@ -369,7 +397,12 @@ export async function sendMessage(req: AuthRequest, res: Response) {
         let firstChunk = true;
 
         try {
-            for await (const part of streamOllamaResponse(selectedModel, ollamaMessages, edenLevel)) {
+            // Choose the appropriate stream generator based on model
+            const streamGenerator = selectedModel.startsWith('claude')
+                ? streamClaudeResponse(selectedModel, ollamaMessages, edenLevel)
+                : streamOllamaResponse(selectedModel, ollamaMessages, edenLevel);
+
+            for await (const part of streamGenerator) {
 
                 // transform service events to SSE events
                 if (part.type === 'thinking') {
@@ -394,8 +427,8 @@ export async function sendMessage(req: AuthRequest, res: Response) {
                                 // Send a "generating deliverable" indicator
                                 res.write(`event: assistant_chunk\ndata: ${JSON.stringify({
                                     id: assistantMessageId,
-                                    agent: selectedModel,
-                                    content: '\n\n_Generando entregable..._',
+                                    agent: 'Adán',
+                                    content: `\`\`\`status-card\n${JSON.stringify({ status: 'generating', message: 'Construyendo documento oficial...' })}\n\`\`\``,
                                     isThinking: false,
                                     isGeneratingDeliverable: true
                                 })}\n\n`);
@@ -409,7 +442,7 @@ export async function sendMessage(req: AuthRequest, res: Response) {
                         displayContent += part.content;
                         res.write(`event: assistant_chunk\ndata: ${JSON.stringify({
                             id: assistantMessageId,
-                            agent: selectedModel,
+                            agent: 'Adán',
                             content: part.content,
                             isThinking: false
                         })}\n\n`);
@@ -432,7 +465,7 @@ export async function sendMessage(req: AuthRequest, res: Response) {
                     session_id,
                     req.userId!,
                     fullContent,
-                    `AGENT:${selectedModel}`,
+                    `AGENT:Adán`,
                     agentSelection.reasoning,
                     getCurrentTimestamp()
                 ]
@@ -442,7 +475,7 @@ export async function sendMessage(req: AuthRequest, res: Response) {
             res.write(`event: assistant_message\ndata: ${JSON.stringify({
                 id: assistantMessageId,
                 role: 'assistant',
-                agent: selectedModel,
+                agent: 'Adán',
                 content: fullContent,
                 moderationInfo: agentSelection,
                 created_at: getCurrentTimestamp()
@@ -477,6 +510,22 @@ export async function sendMessage(req: AuthRequest, res: Response) {
 export function generateWelcomeMessage(req: AuthRequest, res: Response) {
     try {
         const { id } = req.params;
+
+        // Check if messages already exist to prevent duplicates
+        const existingMessages = getAll<Message>(
+            'SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC LIMIT 1',
+            [id]
+        );
+
+        if (existingMessages.length > 0) {
+            return res.json({
+                success: true,
+                data: {
+                    message: existingMessages[0].content,
+                    messageId: existingMessages[0].id
+                }
+            });
+        }
 
         // Get the deliverable associated with this chat
         const deliverable = getOne<{
@@ -516,24 +565,17 @@ export function generateWelcomeMessage(req: AuthRequest, res: Response) {
 
         const previousContext: string[] = [];
         for (const prev of previousDeliverables) {
-            const lastMsg = getOne<{ content: string }>(
-                `SELECT content FROM chat_messages 
-                 WHERE session_id = ? AND role = 'assistant' 
-                 ORDER BY created_at DESC LIMIT 1`,
-                [prev.chat_id]
-            );
-            if (lastMsg?.content) {
-                // Extract first meaningful paragraph (skip very short or code blocks)
-                let summary = lastMsg.content
-                    .split('\n')
-                    .filter(line => line.length > 50 && !line.startsWith('```'))
-                    .slice(0, 2)
-                    .join(' ')
-                    .substring(0, 200);
-                if (summary) {
-                    previousContext.push(`✅ **${prev.eden_level}**: ${summary}...`);
-                }
-            }
+            // Find the deliverable title directly from the DB if possible, or fall back to the project_deliverable title
+            const title = prev.title;
+
+            // We can also try to extract the specific "deliverable_title" from the JSON in the chat history if needed, 
+            // but the DB title is usually safer and cleaner.
+
+            // Format: special code block for the frontend to render as a card
+            previousContext.push(`\`\`\`context-card\n${JSON.stringify({
+                level: prev.eden_level,
+                title: title
+            })}\n\`\`\``);
         }
 
         // Level descriptions

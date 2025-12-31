@@ -48,7 +48,7 @@ export function determineAgentsByContent(message: string): AgentSelectionResult 
             agents: ['gpt-oss'],
             reasoning: 'Validación de idea de negocio - Nivel 1 EDEN',
             primary_agent: 'gpt-oss',
-            eden_level: 'Nivel 1 - El Dolor',
+            eden_level: 'E - Exploración',
             deliverables: ['DIAGNOSTICO_DOLOR.pdf', 'SCORE_OPORTUNIDAD.pdf']
         };
     }
@@ -60,7 +60,7 @@ export function determineAgentsByContent(message: string): AgentSelectionResult 
             agents: ['gpt-oss'],
             reasoning: 'Diseño de solución - Nivel 2 EDEN',
             primary_agent: 'gpt-oss',
-            eden_level: 'Nivel 2 - La Solución',
+            eden_level: 'D - Definición',
             deliverables: ['PROPUESTA_SOLUCION.pdf', 'MATRIZ_DIFERENCIACION.pdf']
         };
     }
@@ -72,19 +72,22 @@ export function determineAgentsByContent(message: string): AgentSelectionResult 
             agents: ['gpt-oss'],
             reasoning: 'Plan de negocio y constitución - Nivel 3 EDEN',
             primary_agent: 'gpt-oss',
-            eden_level: 'Nivel 3 - Plan de Negocio',
+            eden_level: 'E - Estructuración',
             deliverables: ['PLAN_NEGOCIO.pdf', 'BUSINESS_MODEL_CANVAS.pdf']
         };
     }
 
     // Nivel 4 - MVP Funcional
     if (lowerMessage.includes('mvp') || lowerMessage.includes('desarrollar') ||
-        lowerMessage.includes('código') || lowerMessage.includes('web')) {
+        lowerMessage.includes('código') || lowerMessage.includes('web') ||
+        lowerMessage.includes('landing') || lowerMessage.includes('sitio') ||
+        lowerMessage.includes('página') || lowerMessage.includes('html') ||
+        lowerMessage.includes('css') || lowerMessage.includes('frontend')) {
         return {
-            agents: ['gpt-oss'],
-            reasoning: 'Desarrollo de MVP - Nivel 4 EDEN',
-            primary_agent: 'gpt-oss',
-            eden_level: 'Nivel 4 - MVP Funcional',
+            agents: ['claude-opus-4-5-20251101'],
+            reasoning: 'Desarrollo de MVP - Nivel 4 EDEN (Claude Opus 4.5)',
+            primary_agent: 'claude-opus-4-5-20251101',
+            eden_level: 'N - Navegación',
             deliverables: ['MVP_WEB_FUNCIONAL.zip', 'DOCUMENTACION_TECNICA.pdf']
         };
     }
@@ -96,7 +99,7 @@ export function determineAgentsByContent(message: string): AgentSelectionResult 
             agents: ['gpt-oss'],
             reasoning: 'Validación de mercado - Nivel 5 EDEN',
             primary_agent: 'gpt-oss',
-            eden_level: 'Nivel 5 - Validación de Mercado',
+            eden_level: 'E - Escalamiento', // Mapping "Validación" to generic Escalamiento/Growth for now as prompt only has 5 keys
             deliverables: ['INFORME_VALIDACION.pdf', 'METRICAS_SATISFACCION.pdf']
         };
     }
@@ -108,7 +111,7 @@ export function determineAgentsByContent(message: string): AgentSelectionResult 
             agents: ['gpt-oss'],
             reasoning: 'Estrategia de crecimiento e inversión - Nivel 6 EDEN',
             primary_agent: 'gpt-oss',
-            eden_level: 'Nivel 6 - Proyección y Estrategia',
+            eden_level: 'E - Escalamiento',
             deliverables: ['PROYECCION_FINANCIERA.pdf', 'PLAN_CAPTACION_INVERSION.pdf']
         };
     }
@@ -120,7 +123,7 @@ export function determineAgentsByContent(message: string): AgentSelectionResult 
             agents: ['gpt-oss'],
             reasoning: 'Lanzamiento al mercado - Nivel 7 EDEN',
             primary_agent: 'gpt-oss',
-            eden_level: 'Nivel 7 - Lanzamiento Real',
+            eden_level: 'E - Escalamiento',
             deliverables: ['STARTUP_ACTIVA.pdf', 'PLAN_MARKETING.pdf']
         };
     }
@@ -130,20 +133,20 @@ export function determineAgentsByContent(message: string): AgentSelectionResult 
         agents: ['gpt-oss'],
         reasoning: 'Consulta general - Agente principal ADÁN',
         primary_agent: 'gpt-oss',
-        eden_level: 'Consulta General',
+        eden_level: 'E - Exploración', // Default to Level 1 if unsure
         deliverables: ['RESPUESTA_GENERAL.pdf']
     };
 }
 
 /**
- * Select agents based on mentions or content
+ * Select agents based on mentions or content   
  */
 export function selectAgents(message: string): AgentSelectionResult {
     const availableModels = [
         'gpt-oss', 'eva_vpmarketing', 'tita_vp_administrativo',
         'dany_tecnicocloud', 'ethan_soporte', 'vito_fullstack', 'andu_mentora',
         'luna_inversionista', 'liam_inversionista', 'diego_inversionista',
-        'milo_documentador'
+        'milo_documentador', 'claude-opus-4-5-20251101'
     ];
 
     // Check for explicit mentions

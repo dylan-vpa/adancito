@@ -5,9 +5,10 @@ interface PreviewSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     htmlCode: string;
+    inline?: boolean;
 }
 
-export function PreviewSidebar({ isOpen, onClose, htmlCode }: PreviewSidebarProps) {
+export function PreviewSidebar({ isOpen, onClose, htmlCode, inline = false }: PreviewSidebarProps) {
     const [key, setKey] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [width, setWidth] = useState(600);
@@ -21,11 +22,14 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode }: PreviewSidebarProp
 
     // Handle resize
     const startResize = useCallback((e: React.MouseEvent) => {
+        if (inline) return;
         e.preventDefault();
         setIsResizing(true);
-    }, []);
+    }, [inline]);
 
     useEffect(() => {
+        if (inline) return;
+
         const handleMouseMove = (e: MouseEvent) => {
             if (!isResizing) return;
             const newWidth = window.innerWidth - e.clientX;
@@ -51,7 +55,7 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode }: PreviewSidebarProp
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
         };
-    }, [isResizing]);
+    }, [isResizing, inline]);
 
     const handleDownload = () => {
         const blob = new Blob([htmlCode], { type: 'text/html' });
@@ -66,6 +70,149 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode }: PreviewSidebarProp
     };
 
     if (!isOpen) return null;
+
+    if (inline) {
+        return (
+            <div
+                style={{
+                    height: '100%',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    backgroundColor: 'var(--color-primary-surface)', // Match chat background/surface
+                    borderLeft: '1px solid var(--color-primary-stroke)',
+                }}
+            >
+                {/* Header */}
+                <div style={{
+                    padding: 'var(--spacing-md)',
+                    borderBottom: '1px solid var(--color-primary-stroke)',
+                    backgroundColor: 'var(--color-primary-main)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    minHeight: '69px', // Align with Chat header height if possible
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                        <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            background: 'var(--color-accent-primary)', // Using theme accent
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.1 // Subtle icon background
+                        }}>
+                            <div style={{ position: 'absolute', opacity: 1, color: 'var(--color-accent-primary)' }}>
+                                <Monitor size={18} />
+                            </div>
+                        </div>
+                        {/* Wrapper for absolute icon alignment hack or just clean flex */}
+                        <div style={{ marginLeft: '-32px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Monitor size={18} className="text-accent-primary" />
+                        </div>
+
+                        <div>
+                            <h3 style={{ color: 'var(--color-text-primary)', fontSize: '14px', fontWeight: 600, margin: 0 }}>
+                                Vista Previa
+                            </h3>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                            onClick={handleDownload}
+                            className="hover:scale-105 transition-transform"
+                            style={{
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                background: 'white',
+                                color: 'black',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                            }}
+                        >
+                            <Download size={14} /> Descargar
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="hover:bg-white/5"
+                            style={{
+                                padding: '6px',
+                                borderRadius: '6px',
+                                background: 'transparent',
+                                color: 'var(--color-text-secondary)',
+                                border: '1px solid var(--color-primary-stroke)',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Browser Frame */}
+                <div style={{
+                    flex: 1,
+                    padding: 'var(--spacing-md)',
+                    backgroundColor: 'var(--color-primary-surface)',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
+                    <div style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: 'var(--radius-md)',
+                        overflow: 'hidden',
+                        boxShadow: '0 0 0 1px var(--color-primary-stroke)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        backgroundColor: '#ffffff', // Browser content is always white/native
+                    }}>
+                        {/* Browser Chrome */}
+                        <div style={{
+                            height: '32px',
+                            background: '#f1f5f9', // Light gray standard browser chrome
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0 12px',
+                            gap: '8px',
+                            borderBottom: '1px solid #e2e8f0',
+                        }}>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f57', border: '1px solid #e0443e' }} />
+                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#febc2e', border: '1px solid #d89e24' }} />
+                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#28c840', border: '1px solid #1aab29' }} />
+                            </div>
+                            <div style={{
+                                flex: 1,
+                                textAlign: 'center',
+                                fontSize: '10px',
+                                color: '#64748b',
+                                fontFamily: 'monospace'
+                            }}>
+                                mvp-preview-live
+                            </div>
+                        </div>
+
+                        <iframe
+                            key={key}
+                            srcDoc={htmlCode}
+                            style={{ flex: 1, width: '100%', border: 'none', background: 'white' }}
+                            title="MVP Preview"
+                            sandbox="allow-scripts allow-modals allow-forms allow-popups"
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>

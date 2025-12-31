@@ -39,7 +39,7 @@ export function StepsTimeline({ deliverables, onDeliverableClick, isDeliverableA
             <div
                 style={{
                     position: 'absolute',
-                    top: '40px',
+                    top: '48px',
                     left: '24px',
                     right: '24px',
                     height: '2px',

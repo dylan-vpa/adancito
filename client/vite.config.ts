@@ -14,9 +14,10 @@ export default defineConfig({
     port: 8000,
     proxy: {
       '/api': {
-        target: 'https://x1rspglhz3krhh-8001.proxy.runpod.net',
+        target: 'http://localhost:8001',
         changeOrigin: true,
       },
+
     },
   },
 })

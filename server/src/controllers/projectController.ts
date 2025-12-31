@@ -35,9 +35,17 @@ export function getProjects(req: AuthRequest, res: Response) {
             [req.userId!]
         );
 
+        const projectsWithDeliverables = projects.map(project => {
+            const deliverables = getAll<ProjectDeliverable>(
+                'SELECT * FROM project_deliverables WHERE project_id = ?',
+                [project.id]
+            );
+            return { ...project, deliverables };
+        });
+
         res.json({
             success: true,
-            data: projects
+            data: projectsWithDeliverables
         });
     } catch (error) {
         console.error('Get projects error:', error);

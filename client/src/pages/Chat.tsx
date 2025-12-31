@@ -273,19 +273,58 @@ export function Chat() {
         setShowPreview(true);
     };
 
+    // Layout & Resizing Logic
+    const [previewWidth, setPreviewWidth] = useState(600);
+    const [isResizing, setIsResizing] = useState(false);
+
+    const startResize = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsResizing(true);
+    };
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isResizing) return;
+            const newWidth = window.innerWidth - e.clientX;
+            // Min width 350px, Max width 70% of screen
+            if (newWidth >= 350 && newWidth <= window.innerWidth * 0.7) {
+                setPreviewWidth(newWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+        };
+
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isResizing]);
+
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center" style={{ minHeight: '100vh' }}>
+            <div className="flex items-center justify-center white-text" style={{ minHeight: '100vh', color: 'white' }}>
                 <Spinner large />
             </div>
         );
     }
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-primary-main)' }}>
-            <div className="flex flex-col" style={{ height: '100vh' }}>
-                {/* Simple header - back button and title */}
-                <div style={{ padding: 'var(--spacing-md) var(--spacing-xl)' }}>
+        <div style={{ height: '100vh', backgroundColor: 'var(--color-primary-main)', display: 'flex', overflow: 'hidden' }}>
+            {/* Left Pane: Chat Area */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: '400px', height: '100%' }}>
+                {/* Header */}
+                <div style={{ padding: 'var(--spacing-md) var(--spacing-xl)', borderBottom: '1px solid var(--color-primary-stroke)' }}>
                     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
                         <div className="flex items-center gap-md">
                             <button
@@ -300,31 +339,19 @@ export function Chat() {
                     </div>
                 </div>
 
-                {/* Messages - seamless, no borders */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--spacing-md) var(--spacing-xl)' }}>
-                    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+                {/* Messages Area */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0' }} className="scrollbar-thin">
+                    <div style={{ maxWidth: '900px', margin: '0 auto', padding: 'var(--spacing-md) var(--spacing-xl)', minHeight: '100%' }}>
                         {messages.length === 0 ? (
                             <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
                                 <div className="text-center" style={{ maxWidth: '700px', padding: 'var(--spacing-2xl)' }}>
-                                    {/* Icon based on EDEN level */}
+                                    {/* ... Welcome Icon Logic ... */}
                                     {(() => {
                                         const getEdenIcon = () => {
                                             const level = deliverableInfo?.level?.toLowerCase() || '';
-                                            if (level.includes('exploración') || level.includes('e -')) {
-                                                return <Compass size={64} strokeWidth={1.5} />;
-                                            } else if (level.includes('definición') || level.includes('d -')) {
-                                                return <Target size={64} strokeWidth={1.5} />;
-                                            } else if (level.includes('estructuración')) {
-                                                return <Building2 size={64} strokeWidth={1.5} />;
-                                            } else if (level.includes('navegación') || level.includes('n -')) {
-                                                return <Rocket size={64} strokeWidth={1.5} />;
-                                            } else if (level.includes('escalamiento')) {
-                                                return <TrendingUp size={64} strokeWidth={1.5} />;
-                                            } else if (level.includes('desarrollo continuo')) {
-                                                return <RefreshCw size={64} strokeWidth={1.5} />;
-                                            } else if (level.includes('maestro')) {
-                                                return <Crown size={64} strokeWidth={1.5} />;
-                                            }
+                                            if (level.includes('exploración') || level.includes('e -')) return <Compass size={64} strokeWidth={1.5} />;
+                                            if (level.includes('definición') || level.includes('d -')) return <Target size={64} strokeWidth={1.5} />;
+                                            if (level.includes('estructuración') || level.includes('n -')) return <Rocket size={64} strokeWidth={1.5} />; // MVP uses Rocket
                                             return <Sparkles size={64} strokeWidth={1.5} />;
                                         };
 
@@ -352,34 +379,9 @@ export function Chat() {
                                         {deliverableInfo?.level || 'Comienza tu conversación'}
                                     </h1>
 
-                                    <p className="text-secondary" style={{
-                                        fontSize: 'var(--font-size-h3)',
-                                        lineHeight: '1.6',
-                                        marginBottom: 'var(--spacing-xl)',
-                                    }}>
+                                    <p className="text-secondary" style={{ fontSize: 'var(--font-size-h3)', lineHeight: '1.6', marginBottom: 'var(--spacing-xl)' }}>
                                         {deliverableInfo?.description || 'Escribe tu primera pregunta para comenzar'}
                                     </p>
-
-                                    <div style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: 'var(--spacing-xs)',
-                                        padding: 'var(--spacing-sm) var(--spacing-md)',
-                                        backgroundColor: 'rgba(75, 224, 152, 0.1)',
-                                        borderRadius: 'var(--radius-medium)',
-                                        border: '1px solid rgba(75, 224, 152, 0.2)',
-                                    }}>
-                                        <div style={{
-                                            width: '8px',
-                                            height: '8px',
-                                            borderRadius: '50%',
-                                            backgroundColor: 'var(--color-accent-green-main)',
-                                            animation: 'pulse 2s infinite',
-                                        }} />
-                                        <span className="caption" style={{ color: 'var(--color-accent-green-soft)' }}>
-                                            IA lista para ayudarte
-                                        </span>
-                                    </div>
                                 </div>
                             </div>
                         ) : (
@@ -396,17 +398,42 @@ export function Chat() {
                     </div>
                 </div>
 
-                {/* Input - seamless, no top border */}
-                <div style={{ maxWidth: '900px', margin: '0 auto', width: '100%', padding: '0 var(--spacing-xl) var(--spacing-md)' }}>
-                    <ChatInput onSendMessage={handleSendMessage} disabled={isSending} />
+                {/* Input Area */}
+                <div style={{
+                    width: '100%',
+                    borderTop: '1px solid var(--color-primary-stroke)',
+                    backgroundColor: 'var(--color-primary-main)',
+                    position: 'relative',
+                    zIndex: 10
+                }}>
+                    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 var(--spacing-xl) var(--spacing-md)' }}>
+                        <ChatInput onSendMessage={handleSendMessage} disabled={isSending} />
+                    </div>
                 </div>
             </div>
 
-            <PreviewSidebar
-                isOpen={showPreview}
-                onClose={() => setShowPreview(false)}
-                htmlCode={previewHtml}
-            />
+            {/* Right Pane: Preview Sidebar (Resizable) */}
+            {showPreview && (
+                <>
+                    {/* Resize Handle */}
+                    <div
+                        onMouseDown={startResize}
+                        className="w-1 hover:bg-accent-green/50 transition-colors cursor-col-resize flex items-center justify-center z-50"
+                        style={{ background: isResizing ? 'var(--color-accent-green-main)' : 'var(--color-primary-stroke)' }}
+                    >
+                    </div>
+
+                    {/* Preview Container */}
+                    <div style={{ width: previewWidth, minWidth: '350px', height: '100%', position: 'relative' }}>
+                        <PreviewSidebar
+                            isOpen={showPreview}
+                            onClose={() => setShowPreview(false)}
+                            htmlCode={previewHtml}
+                            inline={true}
+                        />
+                    </div>
+                </>
+            )}
         </div>
     );
 }

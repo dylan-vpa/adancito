@@ -11,6 +11,7 @@ import { Profile } from './pages/Profile';
 import { Archived } from './pages/Archived';
 import { ProjectView } from './pages/ProjectView';
 import { Spinner } from './components/common/Spinner';
+import { Toaster } from 'sonner';
 import './styles/index.css';
 
 // Protected route wrapper
@@ -33,6 +34,24 @@ function App() {
         <ToastProvider>
             <AuthProvider>
                 <BrowserRouter>
+                    <Toaster
+                        position="bottom-center"
+                        theme="dark"
+                        richColors
+                        toastOptions={{
+                            style: {
+                                background: 'rgba(22, 26, 30, 0.8)',
+                                backdropFilter: 'blur(12px)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                borderRadius: '12px',
+                                color: 'var(--color-neutral-white)',
+                                fontSize: '14px',
+                                fontFamily: 'var(--font-primary)',
+                                padding: '16px'
+                            },
+                            className: 'adan-toast'
+                        }}
+                    />
                     <Routes>
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />

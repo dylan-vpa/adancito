@@ -52,16 +52,14 @@ export function Modal({
             }}
         >
             <div
+                className="card"
                 style={{
-                    backgroundColor: 'var(--color-primary-main)',
-                    borderRadius: 'var(--radius-large)',
-                    border: '1px solid var(--color-primary-surface)',
                     width,
                     maxWidth: '90vw',
                     maxHeight: '90vh',
                     display: 'flex',
                     flexDirection: 'column',
-                    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
+                    padding: 0, // Reset padding as we have header/content/footer
                     animation: 'scaleIn 0.2s ease-out'
                 }}
             >
@@ -104,7 +102,7 @@ export function Modal({
                         style={{
                             padding: 'var(--spacing-md) var(--spacing-xl)',
                             borderTop: '1px solid var(--color-primary-surface)',
-                            backgroundColor: 'var(--color-primary-elevated)',
+                            backgroundColor: 'rgba(0, 0, 0, 0.2)', // Darker glassy footer
                             borderBottomLeftRadius: 'var(--radius-large)',
                             borderBottomRightRadius: 'var(--radius-large)',
                             display: 'flex',

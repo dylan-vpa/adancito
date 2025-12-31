@@ -121,6 +121,7 @@ export async function login(req: AuthRequest, res: Response) {
             });
         }
 
+
         // Get user
         const user = getOne<User>(
             'SELECT * FROM users WHERE email = ?',

@@ -1,5 +1,20 @@
+import path from 'path';
 import dotenv from 'dotenv';
-dotenv.config();
+const envPath = path.resolve(__dirname, '../../.env');
+const result = dotenv.config({ path: envPath });
+
+console.log('--- SERVER STARTUP DEBUG ---');
+console.log('CWD:', process.cwd());
+console.log('__dirname:', __dirname);
+console.log('Target .env path:', envPath);
+console.log('Dotenv parsed:', result.parsed ? 'Yes' : 'No');
+console.log('Dotenv error:', result.error);
+console.log('ANTHROPIC_API_KEY present:', !!process.env.ANTHROPIC_API_KEY);
+if (process.env.ANTHROPIC_API_KEY) {
+    console.log('ANTHROPIC_API_KEY length:', process.env.ANTHROPIC_API_KEY.length);
+    console.log('ANTHROPIC_API_KEY start:', process.env.ANTHROPIC_API_KEY.substring(0, 10));
+}
+console.log('----------------------------');
 
 import app from './app';
 import { initializeDatabase } from './models/db';

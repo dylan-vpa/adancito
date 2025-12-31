@@ -9,6 +9,7 @@
         "start": "node dist/server.js"
     },
     "dependencies": {
+        "@anthropic-ai/sdk": "^0.71.2",
         "bcrypt": "^5.1.1",
         "better-sqlite3": "^9.4.0",
         "cors": "^2.8.5",
