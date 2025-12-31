@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 import authRoutes from './routes/authRoutes';
 import chatRoutes from './routes/chatRoutes';
 import userRoutes from './routes/userRoutes';
@@ -19,6 +21,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static client build if it exists (for production)
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
+if (fs.existsSync(clientDistPath)) {
+    console.log(`📦 Serving static client from: ${clientDistPath}`);
+    app.use(express.static(clientDistPath));
+}
+
 // Temporary debug route - REMOVED
 
 
@@ -34,6 +43,16 @@ app.use('/api/deliverables', deliverableRoutes);
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Adan server is running' });
 });
+
+// SPA fallback - serve index.html for any non-API routes (for React Router)
+if (fs.existsSync(clientDistPath)) {
+    app.get('*', (req, res) => {
+        // Don't serve index.html for API routes
+        if (!req.path.startsWith('/api')) {
+            res.sendFile(path.join(clientDistPath, 'index.html'));
+        }
+    });
+}
 
 // Error handling
 app.use(errorHandler);
