@@ -135,14 +135,12 @@ export interface ApiResponse<T = any> {
     message?: string;
 }
 
-// EDEN Framework levels
+// EDEN Framework levels - matching deliverable names
 export type EdenLevel =
-    | 'Nivel 1 - El Dolor'
-    | 'Nivel 2 - La Solución'
-    | 'Nivel 3 - Plan de Negocio'
-    | 'Nivel 4 - MVP Funcional'
-    | 'Nivel 5 - Validación de Mercado'
-    | 'Nivel 6 - Proyección y Estrategia'
-    | 'Nivel 7 - Lanzamiento Real'
+    | 'E - Exploración'           // Diagnóstico de Oportunidad
+    | 'D - Definición'            // Modelo de Negocio
+    | 'E - Estructuración'        // Plan de Operaciones  
+    | 'N - Navegación'            // MVP / Landing Page
+    | 'E - Escalamiento'          // Plan de Crecimiento
     | 'Consulta General'
     | 'Consulta Específica';
