@@ -14,6 +14,7 @@ export interface User {
 export interface ChatSession {
     id: string;
     user_id: string;
+    project_id?: string;
     title: string;
     status: 'active' | 'archived';
     last_active: string;
@@ -135,12 +136,14 @@ export interface ApiResponse<T = any> {
     message?: string;
 }
 
-// EDEN Framework levels - matching deliverable names
+// EDEN Framework levels
 export type EdenLevel =
-    | 'E - Exploración'           // Diagnóstico de Oportunidad
-    | 'D - Definición'            // Modelo de Negocio
-    | 'E - Estructuración'        // Plan de Operaciones  
-    | 'N - Navegación'            // MVP / Landing Page
-    | 'E - Escalamiento'          // Plan de Crecimiento
+    | 'Nivel 1 - El Dolor'
+    | 'Nivel 2 - La Solución'
+    | 'Nivel 3 - Plan de Negocio'
+    | 'Nivel 4 - MVP Funcional'
+    | 'Nivel 5 - Validación de Mercado'
+    | 'Nivel 6 - Proyección y Estrategia'
+    | 'Nivel 7 - Lanzamiento Real'
     | 'Consulta General'
     | 'Consulta Específica';

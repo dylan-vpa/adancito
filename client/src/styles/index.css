@@ -31,6 +31,12 @@
   --gradient-accent-soft: linear-gradient(135deg, #9EC8B3 0%, #5FAF8A 100%);
   --gradient-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
 
+  /* Level Gradients (Traffic Light System) */
+  --gradient-level-1: radial-gradient(circle at top, #2F1C1C 0%, #0B0E11 100%); /* Red/Warm */
+  --gradient-level-2: radial-gradient(circle at top, #2F241C 0%, #0B0E11 100%); /* Orange */
+  --gradient-level-3: radial-gradient(circle at top, #2F2A1C 0%, #0B0E11 100%); /* Yellow/Amber */
+  --gradient-level-4: radial-gradient(circle at top, #1C2F28 0%, #0B0E11 100%); /* Green (Same as Primary) */
+
   /* Feedback Colors (kept for utility, adjusted to match palette) */
   --color-feedback-success: #9EC8B3;
   --color-feedback-warning: #E5C07B;

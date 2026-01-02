@@ -7,6 +7,7 @@ import { MessageBubble } from '../components/chat/MessageBubble';
 import { ChatInput } from '../components/chat/ChatInput';
 import { Spinner } from '../components/common/Spinner';
 import { PreviewSidebar } from '../components/layout/PreviewSidebar';
+import { NextLevelCard } from '../components/chat/NextLevelCard';
 import type { Message, ModerationInfo } from '../types';
 
 export function Chat() {
@@ -18,6 +19,7 @@ export function Chat() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
     const [chatTitle, setChatTitle] = useState('');
+    const [projectId, setProjectId] = useState<string | null>(null);
     const [deliverableInfo, setDeliverableInfo] = useState<{ level?: string; description?: string } | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +41,7 @@ export function Chat() {
                     apiClient.getChatMessages(id),
                 ]);
                 setChatTitle(session.title);
+                setProjectId(session.project_id || null);
                 setMessages(chatMessages);
 
                 // Get deliverable info from location state if available
@@ -319,8 +322,93 @@ export function Chat() {
         );
     }
 
+    // Theme Logic
+    const getTheme = () => {
+        const level = deliverableInfo?.level?.toLowerCase() || '';
+
+        // Level 1: Exploración (The Pain) -> RED / WARM
+        if (level.includes('nivel 1') || level.includes('exploración') || level.includes('dolor')) {
+            return {
+                gradient: 'var(--gradient-level-1)',
+                accent: '#E07A7A', // Reddish
+                textGradient: 'linear-gradient(135deg, #FFFFFF 0%, #E07A7A 100%)',
+                icon: <Compass size={64} strokeWidth={1.5} />
+            };
+        }
+
+        // Level 2: Definición (The Solution) -> ORANGE
+        if (level.includes('nivel 2') || level.includes('definición') || level.includes('solución')) {
+            return {
+                gradient: 'var(--gradient-level-2)',
+                accent: '#E57B30', // Orange
+                textGradient: 'linear-gradient(135deg, #FFFFFF 0%, #E57B30 100%)',
+                icon: <Target size={64} strokeWidth={1.5} />
+            };
+        }
+
+        // Level 3: Estructuración (Business Plan) -> YELLOW / AMBER
+        if (level.includes('nivel 3') || level.includes('estructuración') || level.includes('plan')) {
+            return {
+                gradient: 'var(--gradient-level-3)',
+                accent: '#E5C07B', // Amber
+                textGradient: 'linear-gradient(135deg, #FFFFFF 0%, #E5C07B 100%)',
+                icon: <Sparkles size={64} strokeWidth={1.5} />
+            };
+        }
+
+        // Level 4+: Navegación (MVP & Beyond) -> GREEN
+        if (level.includes('nivel 4') || level.includes('navegación') || level.includes('mvp') || level.includes('nivel 5') || level.includes('nivel 6') || level.includes('nivel 7')) {
+            return {
+                gradient: 'var(--gradient-level-4)',
+                accent: '#9EC8B3', // Green
+                textGradient: 'linear-gradient(135deg, #FFFFFF 0%, #9EC8B3 100%)',
+                icon: <Rocket size={64} strokeWidth={1.5} />
+            };
+        }
+
+        // Default -> GREEN (Paradixe Brand)
+        return {
+            gradient: 'var(--gradient-primary)',
+            accent: '#9EC8B3',
+            textGradient: 'linear-gradient(135deg, #FFFFFF 0%, #9EC8B3 100%)',
+            icon: <Sparkles size={64} strokeWidth={1.5} />
+        };
+    };
+
+    const theme = getTheme();
+
+    const handleStartNextLevel = async () => {
+        try {
+            // Determine next level based on current
+            const current = deliverableInfo?.level || 'Exploración';
+            let nextTitle = 'Siguiente Nivel';
+            let nextLevelCode = 'E'; // Default
+
+            if (current.includes('Exploración')) { nextTitle = 'Fase 2: Definición'; nextLevelCode = 'D - Definición'; }
+            else if (current.includes('Definición')) { nextTitle = 'Fase 3: Estructuración'; nextLevelCode = 'E - Estructuración'; }
+            else if (current.includes('Estructuración')) { nextTitle = 'Fase 4: Navegación'; nextLevelCode = 'N - Navegación'; }
+
+            // Create new chat
+            const newChat = await apiClient.createChatSession(nextTitle, projectId || undefined);
+
+            // Navigate to new chat with initial state
+            navigate(`/chat/${newChat.id}`, {
+                state: {
+                    deliverable: {
+                        eden_level: nextLevelCode,
+                        title: nextTitle,
+                        description: 'Comenzando nueva fase...'
+                    },
+                    initialMessage: `Hola Adán, estoy listo para comenzar la fase de ${nextLevelCode}. ¿Qué debemos hacer?`
+                }
+            });
+        } catch (error) {
+            console.error('Failed to start next level:', error);
+        }
+    };
+
     return (
-        <div style={{ height: '100vh', backgroundColor: 'var(--color-primary-main)', display: 'flex', overflow: 'hidden' }}>
+        <div style={{ height: '100vh', background: theme.gradient, display: 'flex', overflow: 'hidden', transition: 'background 1s ease' }}>
             {/* Left Pane: Chat Area */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: '400px', height: '100%' }}>
                 {/* Header */}
@@ -346,35 +434,25 @@ export function Chat() {
                             <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
                                 <div className="text-center" style={{ maxWidth: '700px', padding: 'var(--spacing-2xl)' }}>
                                     {/* ... Welcome Icon Logic ... */}
-                                    {(() => {
-                                        const getEdenIcon = () => {
-                                            const level = deliverableInfo?.level?.toLowerCase() || '';
-                                            if (level.includes('exploración') || level.includes('e -')) return <Compass size={64} strokeWidth={1.5} />;
-                                            if (level.includes('definición') || level.includes('d -')) return <Target size={64} strokeWidth={1.5} />;
-                                            if (level.includes('estructuración') || level.includes('n -')) return <Rocket size={64} strokeWidth={1.5} />; // MVP uses Rocket
-                                            return <Sparkles size={64} strokeWidth={1.5} />;
-                                        };
-
-                                        return (
-                                            <div style={{
-                                                display: 'inline-flex',
-                                                padding: 'var(--spacing-2xl)',
-                                                background: 'radial-gradient(circle, rgba(75, 224, 152, 0.15) 0%, transparent 70%)',
-                                                borderRadius: '50%',
-                                                marginBottom: 'var(--spacing-2xl)',
-                                                color: 'var(--color-accent-green-main)',
-                                            }}>
-                                                {getEdenIcon()}
-                                            </div>
-                                        );
-                                    })()}
+                                    <div style={{
+                                        display: 'inline-flex',
+                                        padding: 'var(--spacing-2xl)',
+                                        background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%)',
+                                        borderRadius: '50%',
+                                        marginBottom: 'var(--spacing-2xl)',
+                                        color: theme.accent,
+                                        transition: 'color 1s ease'
+                                    }}>
+                                        {theme.icon}
+                                    </div>
 
                                     <h1 style={{
                                         marginBottom: 'var(--spacing-lg)',
-                                        background: 'linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-accent-green-soft) 100%)',
+                                        background: theme.textGradient,
                                         WebkitBackgroundClip: 'text',
                                         WebkitTextFillColor: 'transparent',
                                         backgroundClip: 'text',
+                                        transition: 'background 1s ease'
                                     }}>
                                         {deliverableInfo?.level || 'Comienza tu conversación'}
                                     </h1>
@@ -394,6 +472,16 @@ export function Chat() {
                                 />
                             ))
                         )}
+
+                        {/* Next Level Card Trigger */}
+                        {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].deliverableReady && (
+                            <NextLevelCard
+                                currentLevel={deliverableInfo?.level || 'Exploración'}
+                                onStartNextLevel={handleStartNextLevel}
+                            />
+                        )}
+
+
                         <div ref={messagesEndRef} />
                     </div>
                 </div>
@@ -407,7 +495,7 @@ export function Chat() {
                     zIndex: 10
                 }}>
                     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 var(--spacing-xl) var(--spacing-md)' }}>
-                        <ChatInput onSendMessage={handleSendMessage} disabled={isSending} />
+                        <ChatInput onSendMessage={handleSendMessage} disabled={isSending} accentColor={theme.accent} />
                     </div>
                 </div>
             </div>

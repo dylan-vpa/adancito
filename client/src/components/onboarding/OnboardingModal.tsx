@@ -18,7 +18,7 @@ export function OnboardingModal({ onClose }: OnboardingModalProps) {
         {
             icon: Layers,
             title: "El Framework EDEN",
-            description: "Seguimos un camino probado de 5 fases: Exploración, Definición, Estructuración, Navegación (MVP) y Escalamiento."
+            description: "Seguimos un camino probado de 7 niveles: desde validar tu idea (El Dolor) hasta el Lanzamiento Real al mercado."
         },
         {
             icon: Users,

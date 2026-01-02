@@ -22,9 +22,10 @@ const AGENT_GROUPS: Record<string, Agent[]> = {
 interface ChatInputProps {
     onSendMessage: (content: string, model?: string) => void;
     disabled?: boolean;
+    accentColor?: string;
 }
 
-export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
+export function ChatInput({ onSendMessage, disabled, accentColor }: ChatInputProps) {
     const [message, setMessage] = useState('');
     const [selectedAgent, setSelectedAgent] = useState<Agent>(AGENT_GROUPS['Leadership'][0]);
     const [isListening, setIsListening] = useState(false);
@@ -113,7 +114,7 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
                     >
                         {Object.entries(AGENT_GROUPS).map(([category, agents]) => (
                             <div key={category} style={{ marginBottom: 'var(--spacing-md)' }}>
-                                <div className="caption font-medium text-accent" style={{ marginBottom: 'var(--spacing-xs)', paddingLeft: 'var(--spacing-sm)' }}>
+                                <div className="caption font-medium" style={{ marginBottom: 'var(--spacing-xs)', paddingLeft: 'var(--spacing-sm)', color: accentColor || 'var(--color-accent-primary)' }}>
                                     {category}
                                 </div>
                                 {agents.map((agent) => (
@@ -123,7 +124,8 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
                                         style={{
                                             justifyContent: 'flex-start',
                                             fontSize: 'var(--font-size-caption)',
-                                            backgroundColor: selectedAgent.id === agent.id ? 'var(--color-primary-elevated)' : 'transparent'
+                                            backgroundColor: selectedAgent.id === agent.id ? 'var(--color-primary-elevated)' : 'transparent',
+                                            color: selectedAgent.id === agent.id ? (accentColor || 'var(--color-accent-primary)') : 'inherit'
                                         }}
                                         onClick={() => {
                                             setSelectedAgent(agent);
@@ -161,6 +163,7 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
                         fontSize: 'var(--font-size-caption)',
                         whiteSpace: 'nowrap',
                         minHeight: '36px',
+                        color: accentColor || 'var(--color-accent-primary)'
                     }}
                     title={selectedAgent.title}
                 >
@@ -205,8 +208,8 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
                             padding: 'var(--spacing-xs)',
                             minHeight: '36px',
                             minWidth: '36px',
-                            backgroundColor: isListening ? 'var(--color-accent-green-main)' : 'transparent',
-                            color: isListening ? 'var(--color-primary-main)' : 'inherit',
+                            backgroundColor: isListening ? (accentColor || 'var(--color-accent-primary)') : 'transparent',
+                            color: isListening ? '#000' : 'inherit',
                         }}
                         title={isListening ? 'Detener grabación' : 'Grabar voz'}
                     >
@@ -224,6 +227,8 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
                         minHeight: '36px',
                         minWidth: '36px',
                         borderRadius: 'var(--radius-medium)',
+                        backgroundColor: (message.trim() && !disabled) ? (accentColor || '#FFFFFF') : undefined,
+                        color: (message.trim() && !disabled) ? '#000000' : undefined
                     }}
                     title="Enviar mensaje"
                 >

@@ -67,8 +67,8 @@ class ApiClient {
         return response.data.data || [];
     }
 
-    async createChatSession(title?: string): Promise<ChatSession> {
-        const response = await this.client.post<ApiResponse<ChatSession>>('/chats', { title });
+    async createChatSession(title?: string, projectId?: string): Promise<ChatSession> {
+        const response = await this.client.post<ApiResponse<ChatSession>>('/chats', { title, project_id: projectId });
         if (response.data.success && response.data.data) {
             return response.data.data;
         }
