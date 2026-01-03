@@ -18,7 +18,6 @@ export function Chat() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
     const [chatTitle, setChatTitle] = useState('');
-    const [projectId, setProjectId] = useState<string | null>(null);
     const [deliverableInfo, setDeliverableInfo] = useState<{ level?: string; description?: string } | null>(null);
     const [mvpDeployStatus, setMvpDeployStatus] = useState<'idle' | 'deploying' | 'running' | 'error'>('idle');
     const [mvpPreviewUrl, setMvpPreviewUrl] = useState<string | null>(null);
@@ -42,7 +41,6 @@ export function Chat() {
                     apiClient.getChatMessages(id),
                 ]);
                 setChatTitle(session.title);
-                setProjectId(session.project_id || null);
                 setMessages(chatMessages);
 
                 // Get deliverable info from location state if available

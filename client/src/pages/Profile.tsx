@@ -198,7 +198,60 @@ export function Profile() {
                     </div>
 
                     {/* Feedback Form */}
-                    {/* ... existing feedback form ... */}
+                    <div className="card">
+                        <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Enviar Feedback</h3>
+                        <p className="text-secondary caption" style={{ marginBottom: 'var(--spacing-lg)' }}>
+                            Tu opinión nos ayuda a mejorar Adan
+                        </p>
+
+                        {feedbackSent && (
+                            <div style={{
+                                padding: 'var(--spacing-sm) var(--spacing-md)',
+                                backgroundColor: 'rgba(122, 215, 163, 0.1)',
+                                border: '1px solid var(--color-feedback-success)',
+                                borderRadius: 'var(--radius-medium)',
+                                color: 'var(--color-feedback-success)',
+                                marginBottom: 'var(--spacing-md)',
+                            }}>
+                                ¡Gracias por tu feedback!
+                            </div>
+                        )}
+
+                        <div style={{ marginBottom: 'var(--spacing-md)' }}>
+                            <label className="input-label" style={{ marginBottom: 'var(--spacing-sm)' }}>Calificación</label>
+                            <div className="flex gap-sm">
+                                {[1, 2, 3, 4, 5].map((ratingValue) => (
+                                    <button
+                                        key={ratingValue}
+                                        type="button"
+                                        onClick={() => setFeedback({ ...feedback, rating: ratingValue })}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            padding: 'var(--spacing-xs)',
+                                            color: ratingValue <= feedback.rating ? 'var(--color-accent-green-main)' : 'var(--color-neutral-gray-600)',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <Star size={24} fill={ratingValue <= feedback.rating ? 'currentColor' : 'none'} />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <textarea
+                            value={feedback.message}
+                            onChange={(e) => setFeedback({ ...feedback, message: e.target.value })}
+                            placeholder="Cuéntanos qué piensas de Adan..."
+                            className="input textarea"
+                            style={{ marginBottom: 'var(--spacing-md)', minHeight: '100px' }}
+                        />
+
+                        <Button onClick={handleSubmitFeedback} disabled={!feedback.message.trim()}>
+                            Enviar Feedback
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
