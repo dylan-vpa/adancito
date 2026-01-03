@@ -1,7 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Message } from '../../types';
-import { Bot, User, FileText, Download } from 'lucide-react';
+import { Bot, User, FileText, Download, Rocket } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 // Styles for blinking cursor
@@ -24,9 +24,10 @@ interface MessageBubbleProps {
     message: Message;
     onPreview?: (html: string) => void;
     chatId?: string; // Used to mark deliverable as completed
+    onDeployMVP?: (content: string) => void; // Callback to deploy MVP from message content
 }
 
-export function MessageBubble({ message, onPreview, chatId }: MessageBubbleProps) {
+export function MessageBubble({ message, onPreview, chatId, onDeployMVP }: MessageBubbleProps) {
     const isUser = message.role === 'user';
     const isStreaming = message.isStreaming;
     const deliverables = message.moderationInfo?.deliverables;
@@ -433,6 +434,26 @@ export function MessageBubble({ message, onPreview, chatId }: MessageBubbleProps
                                             );
                                         }
 
+                                        // For TypeScript/TSX/JavaScript code with file paths, show Deploy MVP card
+                                        const hasFilePath = codeContent.includes('// ') && codeContent.includes('/') && (match?.[1] === 'typescript' || match?.[1] === 'tsx' || match?.[1] === 'javascript' || match?.[1] === 'jsx');
+                                        if (hasFilePath && !inline) {
+                                            return (
+                                                <div className="my-4">
+                                                    {/* Code Preview */}
+                                                    <pre className={`${className} rounded-xl overflow-hidden`} style={{
+                                                        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                                                        border: '1px solid rgba(255,255,255,0.1)',
+                                                        padding: '1rem',
+                                                        maxHeight: '300px'
+                                                    }}>
+                                                        <code className={className} {...props}>
+                                                            {children}
+                                                        </code>
+                                                    </pre>
+                                                </div>
+                                            );
+                                        }
+
                                         return !inline && match ? (
                                             <pre className={`${className} rounded-xl overflow-hidden`} style={{
                                                 background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
@@ -507,6 +528,59 @@ export function MessageBubble({ message, onPreview, chatId }: MessageBubbleProps
                                 {/* Download Action */}
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-white/5 group-hover:bg-accent-green group-hover:text-primary-main transition-all duration-300">
                                     <Download size={16} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Deploy MVP Card - Shows when message contains multiple code blocks (MVP) */}
+                {!isUser && !message.isStreaming && onDeployMVP && (message.content.match(/```(typescript|tsx|javascript|jsx|prisma)/g)?.length || 0) >= 3 && (
+                    <div className="mt-md w-full max-w-[400px]">
+                        <div
+                            className="relative overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-lg"
+                            style={{
+                                background: 'linear-gradient(145deg, rgba(93, 156, 236, 0.1) 0%, rgba(172, 146, 236, 0.05) 100%)',
+                                backdropFilter: 'blur(10px)',
+                                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                                borderRadius: '16px',
+                                padding: '16px',
+                                border: '1px solid rgba(93, 156, 236, 0.2)'
+                            }}
+                            onClick={() => onDeployMVP(message.content)}
+                        >
+                            {/* Gradient Border Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                            <div className="flex items-center gap-4 relative z-10">
+                                {/* Icon Container */}
+                                <div className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
+                                    style={{
+                                        background: 'linear-gradient(135deg, rgba(93, 156, 236, 0.3) 0%, rgba(172, 146, 236, 0.1) 100%)',
+                                        border: '1px solid rgba(93, 156, 236, 0.3)'
+                                    }}
+                                >
+                                    <Rocket size={24} className="text-blue-400" />
+                                </div>
+
+                                {/* Text Info */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                                            MVP Detectado
+                                        </span>
+                                    </div>
+                                    <h4 className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+                                        Desplegar Aplicación
+                                    </h4>
+                                    <p className="text-xs text-secondary mt-0.5">
+                                        Clic para construir y ejecutar con Docker
+                                    </p>
+                                </div>
+
+                                {/* Deploy Action */}
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-white/5 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                                    <Rocket size={16} />
                                 </div>
                             </div>
                         </div>

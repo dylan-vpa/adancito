@@ -124,7 +124,7 @@ class ApiClient {
     }
 
     async getReferrals(): Promise<{ id: string; email: string; full_name: string | null; created_at: string }[]> {
-        const response = await this.client.get<ApiResponse<{ referrals: { id: string; email: string; full_name: string | null; created_at: string }[] }>>('/user/referrals');
+        const response = await this.client.get<ApiResponse<{ referrals: { id: string; email: string; full_name: string | null; created_at: string }[] }>>('/auth/referrals');
         return response.data.data?.referrals || [];
     }
 

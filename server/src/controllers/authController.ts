@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import bcrypt from 'bcrypt';
 import { AuthRequest, generateToken } from '../middleware/auth';
-import { getOne, runQuery, generateId, getCurrentTimestamp } from '../models/db';
+import { getOne, runQuery, generateId, getCurrentTimestamp, getAll } from '../models/db'; // Added getAll
 
 interface User {
     id: string;
@@ -226,4 +226,39 @@ export function forgotPassword(req: AuthRequest, res: Response) {
         success: true,
         message: 'Password reset link would be sent to your email'
     });
+}
+
+/**
+ * Get users referred by current user
+ */
+export function getReferrals(req: AuthRequest, res: Response) {
+    try {
+        const referrals = getAll<{ id: string; email: string; full_name: string | null; created_at: string; avatar_url: string | null }>(
+            'SELECT id, email, full_name, created_at, avatar_url FROM users WHERE referred_by = ? ORDER BY created_at DESC',
+            [req.userId!]
+        );
+
+        // Mask emails for privacy (e.g., j***@gmail.com)
+        const maskedReferrals = referrals.map((ref: { id: string; email: string; full_name: string | null; created_at: string; avatar_url: string | null }) => {
+            const [name, domain] = ref.email.split('@');
+            const maskedName = name.length > 2 ? `${name[0]}***${name[name.length - 1]}` : `${name}***`;
+            return {
+                ...ref,
+                email: `${maskedName}@${domain}`
+            };
+        });
+
+        res.json({
+            success: true,
+            data: {
+                referrals: maskedReferrals
+            }
+        });
+    } catch (error) {
+        console.error('Get referrals error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get referrals'
+        });
+    }
 }

@@ -9,6 +9,7 @@ import userRoutes from './routes/userRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import projectRoutes from './routes/projectRoutes';
 import deliverableRoutes from './routes/deliverableRoutes';
+import mvpRoutes from './routes/mvpRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 // Load environment variables
@@ -38,6 +39,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api', projectRoutes);
 app.use('/api/deliverables', deliverableRoutes);
+app.use('/api/mvp', mvpRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

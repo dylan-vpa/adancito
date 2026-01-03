@@ -7,7 +7,6 @@ import { MessageBubble } from '../components/chat/MessageBubble';
 import { ChatInput } from '../components/chat/ChatInput';
 import { Spinner } from '../components/common/Spinner';
 import { PreviewSidebar } from '../components/layout/PreviewSidebar';
-import { NextLevelCard } from '../components/chat/NextLevelCard';
 import type { Message, ModerationInfo } from '../types';
 
 export function Chat() {
@@ -21,6 +20,8 @@ export function Chat() {
     const [chatTitle, setChatTitle] = useState('');
     const [projectId, setProjectId] = useState<string | null>(null);
     const [deliverableInfo, setDeliverableInfo] = useState<{ level?: string; description?: string } | null>(null);
+    const [mvpDeployStatus, setMvpDeployStatus] = useState<'idle' | 'deploying' | 'running' | 'error'>('idle');
+    const [mvpPreviewUrl, setMvpPreviewUrl] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -270,6 +271,12 @@ export function Chat() {
 
     const [previewHtml, setPreviewHtml] = useState('');
     const [showPreview, setShowPreview] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
+
+    // Expose for manual testing: window.setPreviewUrl('http://localhost:3000')
+    useEffect(() => {
+        (window as any).setPreviewUrl = setPreviewUrl;
+    }, []);
 
     const handlePreview = (html: string) => {
         setPreviewHtml(html);
@@ -377,35 +384,85 @@ export function Chat() {
 
     const theme = getTheme();
 
-    const handleStartNextLevel = async () => {
+    // MVP Deployment handler
+    const handleDeployMVP = async (content: string) => {
+        if (mvpDeployStatus === 'deploying') return;
+
+        setMvpDeployStatus('deploying');
+        setShowPreview(true); // Show the sidebar
+        setPreviewHtml('<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2e;color:white;font-family:system-ui"><div style="text-align:center"><h2>🚀 Construyendo MVP...</h2><p style="opacity:0.7">Esto puede tomar 2-5 minutos</p></div></div>');
+
         try {
-            // Determine next level based on current
-            const current = deliverableInfo?.level || 'Exploración';
-            let nextTitle = 'Siguiente Nivel';
-            let nextLevelCode = 'E'; // Default
-
-            if (current.includes('Exploración')) { nextTitle = 'Fase 2: Definición'; nextLevelCode = 'D - Definición'; }
-            else if (current.includes('Definición')) { nextTitle = 'Fase 3: Estructuración'; nextLevelCode = 'E - Estructuración'; }
-            else if (current.includes('Estructuración')) { nextTitle = 'Fase 4: Navegación'; nextLevelCode = 'N - Navegación'; }
-
-            // Create new chat
-            const newChat = await apiClient.createChatSession(nextTitle, projectId || undefined);
-
-            // Navigate to new chat with initial state
-            navigate(`/chat/${newChat.id}`, {
-                state: {
-                    deliverable: {
-                        eden_level: nextLevelCode,
-                        title: nextTitle,
-                        description: 'Comenzando nueva fase...'
-                    },
-                    initialMessage: `Hola Adán, estoy listo para comenzar la fase de ${nextLevelCode}. ¿Qué debemos hacer?`
-                }
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/mvp/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    content,
+                    projectName: chatTitle || 'MVP Project',
+                    chatId: id
+                })
             });
+
+            // SSE streaming response
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            if (reader) {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const events = buffer.split('\n\n');
+                    buffer = events.pop() || ''; // Keep incomplete event in buffer
+
+                    for (const event of events) {
+                        if (!event.trim()) continue;
+
+                        const lines = event.split('\n');
+                        const eventLine = lines.find(l => l.startsWith('event:'));
+                        const dataLine = lines.find(l => l.startsWith('data:'));
+
+                        if (!eventLine || !dataLine) continue;
+
+                        const eventType = eventLine.replace('event:', '').trim();
+                        const dataStr = dataLine.replace('data:', '').trim();
+
+                        try {
+                            const data = JSON.parse(dataStr);
+
+                            if (eventType === 'progress') {
+                                // Update loading message with progress
+                                setPreviewHtml(`<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#1a1a2e;color:white;font-family:system-ui"><div style="text-align:center"><h2>🚀 ${data.status}</h2><p style="opacity:0.7">Por favor espera...</p></div></div>`);
+                            } else if (eventType === 'complete') {
+                                console.log('[MVP] Complete:', data);
+                                setMvpPreviewUrl(data.url);
+                                setPreviewHtml(''); // Clear HTML to use URL
+                                setMvpDeployStatus('running');
+                            } else if (eventType === 'error') {
+                                console.error('[MVP] Error:', data);
+                                setPreviewHtml(`<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#2d1a1a;color:#ff6b6b;font-family:system-ui"><div style="text-align:center"><h2>❌ Error</h2><p>${data.error || 'Build failed'}</p></div></div>`);
+                                setMvpDeployStatus('error');
+                            }
+                        } catch (e) {
+                            console.error('[MVP] Parse error:', e, dataStr);
+                        }
+                    }
+                }
+            }
         } catch (error) {
-            console.error('Failed to start next level:', error);
+            console.error('MVP deployment error:', error);
+            setPreviewHtml('<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#2d1a1a;color:#ff6b6b;font-family:system-ui"><div style="text-align:center"><h2>❌ Error de conexión</h2></div></div>');
+            setMvpDeployStatus('error');
         }
     };
+
+
 
     return (
         <div style={{ height: '100vh', background: theme.gradient, display: 'flex', overflow: 'hidden', transition: 'background 1s ease' }}>
@@ -469,17 +526,11 @@ export function Chat() {
                                     message={message}
                                     onPreview={handlePreview}
                                     chatId={id}
+                                    onDeployMVP={handleDeployMVP}
                                 />
                             ))
                         )}
 
-                        {/* Next Level Card Trigger */}
-                        {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].deliverableReady && (
-                            <NextLevelCard
-                                currentLevel={deliverableInfo?.level || 'Exploración'}
-                                onStartNextLevel={handleStartNextLevel}
-                            />
-                        )}
 
 
                         <div ref={messagesEndRef} />
@@ -517,6 +568,7 @@ export function Chat() {
                             isOpen={showPreview}
                             onClose={() => setShowPreview(false)}
                             htmlCode={previewHtml}
+                            url={mvpPreviewUrl || previewUrl}
                             inline={true}
                         />
                     </div>

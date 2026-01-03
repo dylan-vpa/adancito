@@ -4,11 +4,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 interface PreviewSidebarProps {
     isOpen: boolean;
     onClose: () => void;
-    htmlCode: string;
+    htmlCode?: string;
+    url?: string;
     inline?: boolean;
 }
 
-export function PreviewSidebar({ isOpen, onClose, htmlCode, inline = false }: PreviewSidebarProps) {
+export function PreviewSidebar({ isOpen, onClose, htmlCode = '', url, inline = false }: PreviewSidebarProps) {
     const [key, setKey] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [width, setWidth] = useState(600);
@@ -18,7 +19,7 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode, inline = false }: Pr
     // Refresh iframe when code changes
     useEffect(() => {
         setKey(prev => prev + 1);
-    }, [htmlCode]);
+    }, [htmlCode, url]);
 
     // Handle resize
     const startResize = useCallback((e: React.MouseEvent) => {
@@ -58,18 +59,22 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode, inline = false }: Pr
     }, [isResizing, inline]);
 
     const handleDownload = () => {
+        if (!htmlCode) return;
         const blob = new Blob([htmlCode], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
+        const objUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = objUrl;
         a.download = 'mvp-landing.html';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(objUrl);
     };
 
     if (!isOpen) return null;
+
+    const iframeProps = url ? { src: url } : { srcDoc: htmlCode };
+    const title = url ? 'Live Preview' : 'Vista Previa';
 
     if (inline) {
         return (
@@ -98,11 +103,11 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode, inline = false }: Pr
                             width: '32px',
                             height: '32px',
                             borderRadius: '8px',
-                            background: 'var(--color-accent-primary)', // Using theme accent
+                            background: 'var(--color-accent-primary)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            opacity: 0.1 // Subtle icon background
+                            opacity: 0.1
                         }}>
                             <div style={{ position: 'absolute', opacity: 1, color: 'var(--color-accent-primary)' }}>
                                 <Monitor size={18} />
@@ -113,102 +118,60 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode, inline = false }: Pr
                             <Monitor size={18} className="text-accent-primary" />
                         </div>
 
-                        <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <h3 style={{ color: 'var(--color-text-primary)', fontSize: '14px', fontWeight: 600, margin: 0 }}>
-                                Vista Previa
+                                {title}
                             </h3>
+                            {url && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-500 border border-green-500/20 font-medium">
+                                    ONLINE
+                                </span>
+                            )}
                         </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button
-                            onClick={handleDownload}
-                            className="hover:scale-105 transition-transform"
-                            style={{
-                                padding: '6px 12px',
-                                borderRadius: '6px',
-                                background: 'white',
-                                color: 'black',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                            }}
+                            onClick={() => setKey(prev => prev + 1)}
+                            className="btn btn-ghost"
+                            style={{ width: '36px', height: '36px', padding: 0 }}
+                            title="Reload Preview"
                         >
-                            <Download size={14} /> Descargar
+                            <RefreshCw size={18} className="text-gray-400 hover:text-white transition-colors" />
                         </button>
+                        {!url && (
+                            <button
+                                onClick={handleDownload}
+                                className="btn btn-ghost"
+                                style={{ width: '36px', height: '36px', padding: 0 }}
+                                title="Download HTML"
+                            >
+                                <Download size={18} className="text-gray-400 hover:text-white transition-colors" />
+                            </button>
+                        )}
                         <button
                             onClick={onClose}
-                            className="hover:bg-white/5"
-                            style={{
-                                padding: '6px',
-                                borderRadius: '6px',
-                                background: 'transparent',
-                                color: 'var(--color-text-secondary)',
-                                border: '1px solid var(--color-primary-stroke)',
-                                cursor: 'pointer',
-                            }}
+                            className="btn btn-ghost"
+                            style={{ width: '36px', height: '36px', padding: 0 }}
+                            title="Close Preview"
                         >
-                            <X size={16} />
+                            <X size={18} className="text-gray-400 hover:text-white transition-colors" />
                         </button>
                     </div>
                 </div>
 
-                {/* Browser Frame */}
-                <div style={{
-                    flex: 1,
-                    padding: 'var(--spacing-md)',
-                    backgroundColor: 'var(--color-primary-surface)',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}>
-                    <div style={{
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: 'var(--radius-md)',
-                        overflow: 'hidden',
-                        boxShadow: '0 0 0 1px var(--color-primary-stroke)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        backgroundColor: '#ffffff', // Browser content is always white/native
-                    }}>
-                        {/* Browser Chrome */}
-                        <div style={{
-                            height: '32px',
-                            background: '#f1f5f9', // Light gray standard browser chrome
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '0 12px',
-                            gap: '8px',
-                            borderBottom: '1px solid #e2e8f0',
-                        }}>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f57', border: '1px solid #e0443e' }} />
-                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#febc2e', border: '1px solid #d89e24' }} />
-                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#28c840', border: '1px solid #1aab29' }} />
-                            </div>
-                            <div style={{
-                                flex: 1,
-                                textAlign: 'center',
-                                fontSize: '10px',
-                                color: '#64748b',
-                                fontFamily: 'monospace'
-                            }}>
-                                mvp-preview-live
-                            </div>
-                        </div>
-
-                        <iframe
-                            key={key}
-                            srcDoc={htmlCode}
-                            style={{ flex: 1, width: '100%', border: 'none', background: 'white' }}
-                            title="MVP Preview"
-                            sandbox="allow-scripts allow-modals allow-forms allow-popups"
-                        />
-                    </div>
+                {/* Preview Area */}
+                <div style={{ flex: 1, position: 'relative', backgroundColor: 'white' }}>
+                    <iframe
+                        key={key}
+                        {...iframeProps}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none',
+                        }}
+                        title="MVP Preview"
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    />
                 </div>
             </div>
         );
@@ -307,10 +270,10 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode, inline = false }: Pr
                         </div>
                         <div>
                             <h3 style={{ color: 'white', fontSize: '18px', fontWeight: 700, margin: 0 }}>
-                                Vista Previa
+                                {title}
                             </h3>
                             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: 0 }}>
-                                Tu Landing Page • {Math.round(htmlCode.length / 1024)}KB
+                                Tu Landing Page • {htmlCode ? Math.round(htmlCode.length / 1024) : 0}KB
                             </p>
                         </div>
                     </div>
@@ -426,14 +389,14 @@ export function PreviewSidebar({ isOpen, onClose, htmlCode, inline = false }: Pr
                                 fontSize: '11px',
                                 color: 'rgba(255,255,255,0.4)',
                             }}>
-                                🔒 tu-landing-page.com
+                                🔒 {url || 'mvp-preview-live'}
                             </div>
                         </div>
 
                         {/* Iframe */}
                         <iframe
                             key={key}
-                            srcDoc={htmlCode}
+                            {...iframeProps}
                             style={{
                                 flex: 1,
                                 width: '100%',

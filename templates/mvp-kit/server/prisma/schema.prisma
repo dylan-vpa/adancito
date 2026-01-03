@@ -1,0 +1,20 @@
+// This is a basic Prisma schema for MVP apps
+// It will be overwritten by Adán's generated schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Example model - will be replaced by generated code
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

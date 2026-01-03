@@ -77,12 +77,12 @@ export function determineAgentsByContent(message: string): AgentSelectionResult 
         };
     }
 
-    // Nivel 4 - MVP Funcional
-    if (lowerMessage.includes('mvp') || lowerMessage.includes('desarrollar') ||
-        lowerMessage.includes('código') || lowerMessage.includes('web') ||
-        lowerMessage.includes('landing') || lowerMessage.includes('sitio') ||
-        lowerMessage.includes('página') || lowerMessage.includes('html') ||
-        lowerMessage.includes('css') || lowerMessage.includes('frontend')) {
+    // Nivel 4 - MVP Funcional (ONLY explicit MVP requests)
+    // NOTE: Generic keywords removed to prevent false positives in other levels
+    // Claude is also forced via DB level in chatController if chat is linked to MVP deliverable
+    if (lowerMessage.includes('mvp') || lowerMessage.includes('genera el código') ||
+        lowerMessage.includes('crea el código') || lowerMessage.includes('desarrolla el mvp') ||
+        lowerMessage.includes('construye el mvp') || lowerMessage.includes('crea la aplicación')) {
         return {
             agents: ['claude-opus-4-5-20251101'],
             reasoning: 'Desarrollo de MVP - Nivel 4 EDEN (Claude Opus 4.5)',

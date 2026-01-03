@@ -174,19 +174,27 @@ export function ProjectView() {
 
     const handleCreateChatForStep = async (deliverable: ProjectDeliverable) => {
         try {
-            const chat = await apiClient.createChatSession(`${deliverable.eden_level || deliverable.title}`);
+            // Updated title format to match Chat.tsx: "Project - Phase"
+            const chatTitle = `${project?.name} - ${deliverable.eden_level || deliverable.title}`;
+
+            // 1. Create chat with specific title
+            const chat = await apiClient.createChatSession(chatTitle, project?.id);
+
+            // 2. Link chat to deliverable
             await apiClient.updateDeliverable(deliverable.id, {
                 status: deliverable.status === 'pending' ? 'in_progress' : deliverable.status,
                 chat_id: chat.id
             });
-            await apiClient.updateChatSession(chat.id, { title: `${project?.name} - ${deliverable.title}` });
+
+            // 3. Navigate with context state so Chat.tsx knows which AI Welcome to generate
             navigate(`/chat/${chat.id}`, {
                 state: {
                     deliverable: {
-                        eden_level: deliverable.eden_level,
+                        eden_level: deliverable.eden_level || deliverable.title, // Pass full string
                         description: deliverable.description,
-                        title: deliverable.title,
+                        title: chatTitle,
                     }
+                    // initialMessage suppressed
                 }
             });
         } catch (error) {

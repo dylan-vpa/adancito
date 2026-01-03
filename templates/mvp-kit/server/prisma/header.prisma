@@ -1,0 +1,12 @@
+// Auto-generated Prisma schema header
+// This file is prepended to schemas that are missing generator/datasource
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
