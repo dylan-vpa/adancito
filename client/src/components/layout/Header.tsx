@@ -102,7 +102,7 @@ export function Header() {
                             <div
                                 className="absolute right-0 mt-2 w-56 animate-in fade-in slide-in-from-top-2 duration-200"
                                 style={{
-                                    backgroundColor: 'var(--color-elevated)',
+                                    backgroundColor: '#252525',
                                     border: '1px solid rgba(255, 255, 255, 0.1)',
                                     borderRadius: '16px',
                                     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
