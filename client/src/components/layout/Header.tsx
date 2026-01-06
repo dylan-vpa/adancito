@@ -163,8 +163,12 @@ export function Header() {
             {
                 isMobileMenuOpen && (
                     <div
-                        className="md:hidden fixed inset-0 top-[72px] z-40 bg-base animate-in fade-in slide-in-from-top-4 duration-200"
-                        style={{ padding: 'var(--spacing-lg)' }}
+                        className="md:hidden fixed inset-0 top-[72px] z-40 animate-in fade-in slide-in-from-top-4 duration-200"
+                        style={{
+                            padding: 'var(--spacing-lg)',
+                            backgroundColor: 'var(--color-base)',
+                            borderTop: '1px solid var(--surface-glass-border)'
+                        }}
                     >
                         <nav className="flex flex-col gap-md">
                             {menuItems.map((item) => {
